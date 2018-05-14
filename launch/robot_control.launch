@@ -1,0 +1,17 @@
+<launch>
+  <!--param name="robot_description" command="cat /home/tk/catkin_ws/src/rover_research/urdfs/robot.urdf" /-->
+
+  <!-- Load joint controller configurations from YAML file to parameter server -->
+  <rosparam file="$(find rover_research)/config/robot_control.yaml" command="load"/>
+
+  <!-- load the controllers -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/robot" args="pan_tilt_position_controller joint_state_controller"/>
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+    <remap from="/joint_states" to="/robot/joint_states" />
+  </node>
+
+</launch>

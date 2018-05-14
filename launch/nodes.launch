@@ -1,0 +1,7 @@
+<launch>
+  <node name="ultrasonic_node" pkg="rover_research" type="ultrasonic.py" />
+  <node name="timer_node" pkg="rover_research" type="timer.py" />
+  <node name="movement_node" pkg="rover_research" type="movement.py" />
+  <node name="pan_node" pkg="rover_research" type="pan.py" />
+  <node name="arbiter_node" pkg="rover_research" type="arbiter.py" />
+</launch>

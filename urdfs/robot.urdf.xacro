@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<robot name="myrobot" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="/home/tkakusa/catkin_ws/src/rover_research/urdfs/robot.xacro" />
+
+  <!-- Robot base -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+    </visual>
+    <xacro:default_inertial mass="40"/>
+    <collision>
+      <geometry>
+        <box size="${base_length} 0.25 0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Four wheels -->
+  <xacro:default_wheel fb="front" lr="left"/>
+  <xacro:default_wheel fb="front" lr="right"/>
+  <xacro:default_wheel fb="back" lr="left"/>
+  <xacro:default_wheel fb="back" lr="right"/>
+
+  <!-- Joints for the four wheels -->
+  <joint name="base_to_front_right_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_front_right"/>
+    <origin xyz="0.125 0.125 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="base_to_front_left_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_front_left"/>
+    <origin xyz="0.125 -0.125 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="base_to_back_right_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_back_right"/>
+    <origin xyz="-0.125 0.125 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="base_to_back_left_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_back_left"/>
+    <origin xyz="-0.125 -0.125 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+
+
+  <!-- Skid steering controller -->
+  <xacro:skid_steering />
+
+  <!-- Camera Joint -->
+  <joint name="camera_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="${pan_tilt_diam} 0 0.02" rpy="0 0 0"/>
+    <parent link="pan_tilt_link"/>
+    <child link="camera_link"/>
+  </joint>
+
+  <!-- Camera -->
+  <link name="camera_link">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+    <box size="0.02 0.02 0.02"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+    <box size="0.02 0.02 0.02"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+  <!-- camera module-->
+  <gazebo reference="camera_link">
+    <sensor type="camera" name="camera1">
+      <update_rate>0.0</update_rate>
+      <camera name="head">
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. -->
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>camera1</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_link</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Pan tilt controller -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/robot</robotNamespace>
+    </plugin>
+  </gazebo>
+
+  <!-- Pan tilt link -->
+  <link name="pan_tilt_link">
+    <visual>
+      <geometry>
+        <cylinder length="${pan_tilt_len}" radius="${pan_tilt_diam/2}"/>
+      </geometry>
+      <origin xyz="0 0 ${pan_tilt_len/2}"/>
+    </visual>
+    <xacro:default_inertial mass="1"/>
+    <collision>
+      <geometry>
+        <cylinder length="${pan_tilt_len}" radius="${pan_tilt_diam/2}"/>
+      </geometry>
+      <origin xyz="0 0 ${pan_tilt_len/2}"/>
+    </collision>
+  </link>
+
+  <!-- Pan tilt joint -->
+  <joint name="base_to_pan_tilt" type="revolute">
+    <parent link="base_link"/>
+    <child link="pan_tilt_link"/>
+    <origin xyz="${base_length/2-pan_tilt_diam/2} 0 ${base_height/2}"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="${-pi/2}" upper="${pi/2}" velocity="0.5"/>
+  </joint>
+
+  <!-- URDF Transmission interface -->
+  <xacro:trans joint="base_to_pan_tilt" />
+  <xacro:trans joint="base_to_front_right_wheel" />
+  <xacro:trans joint="base_to_front_left_wheel" />
+  <xacro:trans joint="base_to_back_right_wheel" />
+  <xacro:trans joint="base_to_back_left_wheel" />
+
+
+  <xacro:sonar location="front" parent="base_link" xval="${base_length/2}" zval="0" min_angle="-0.261799" max_angle="0.261799" />
+  <xacro:sonar location="back" parent="base_link" xval="-${base_length/2}" zval="0" min_angle="${pi-0.261799}" max_angle="${pi+0.261799}" />
+  <xacro:sonar location="pan" parent="pan_tilt_link" xval="${pan_tilt_diam/2}" zval="${pan_tilt_len-sonar_dim/2}" min_angle="-0.261799" max_angle="0.261799" />
+
+
+
+  <!-- IMU Link -->
+  <link name="imu_link">
+    <xacro:default_inertial mass="1"/>
+  </link>
+
+  <!-- Joint for the IMU -->
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+  </joint>
+
+  <!-- IMU controller -->
+  <xacro:imu />
+</robot>

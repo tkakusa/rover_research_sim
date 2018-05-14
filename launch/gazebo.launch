@@ -1,0 +1,27 @@
+<launch>
+  <arg name='physics' default='ode' />
+  <arg name='world' default='world_1.world' />
+
+  <param name="robot_description" command="cat $(find rover_research)/urdfs/robot.urdf" />
+
+  <!-- Run the xacro script -->
+  <node name="xacro_script" pkg="rover_research" type="run_xacro.bash" />
+
+  <!-- Load the gazebo world
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="recording" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+-->
+
+  <node name='gazebo' pkg='gazebo_ros' type='gzserver' respawn='false' output='screen' args='--verbose -e $(arg physics) $(find rover_research)/worlds/$(arg world)' />
+  <node name='gazebo_gui' pkg='gazebo_ros' type='gzclient' respawn='false' output='screen' />
+
+
+  <!-- Spawn a robot into Gazebo -->
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find rover_research)/urdfs/robot.urdf -urdf -z .2 -model myrobot" />
+
+</launch>

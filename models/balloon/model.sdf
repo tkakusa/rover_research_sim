@@ -1,0 +1,39 @@
+<?xml version='1.0'?>
+<sdf version="1.4">
+<model name="my_model">
+  <pose>0 0 0.5 0 0 0</pose>
+  <link name="balloon_link">
+    <inertial>
+      <mass>1.0</mass>
+      <inertia>
+         <ixx>1</ixx>
+         <ixy>0</ixy>
+         <ixz>0</ixz>
+         <iyy>1</iyy>
+         <iyz>0</iyz>
+         <izz>1</izz>
+      </inertia>
+    </inertial>
+    <visual name="visual">
+      <geometry>
+        <sphere>
+          <radius>.5</radius>
+        </sphere>
+      </geometry>
+      <material>
+        <script>
+          <uri>file://media/materials/scripts/gazebo.material</uri>
+          <name>Gazebo/Orange</name>
+        </script>
+      </material>
+    </visual>
+    <collision name="collision">
+       <geometry>
+         <sphere>
+           <radius>.5</radius>
+         </sphere>
+       </geometry>
+    </collision>
+  </link>
+  </model>
+</sdf>

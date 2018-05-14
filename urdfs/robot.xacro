@@ -1,0 +1,153 @@
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:property name="base_length" value="0.5" />
+  <xacro:property name="base_width" value="0.25" />
+  <xacro:property name="base_height" value="0.1" />
+  <xacro:property name="pan_tilt_diam" value="0.05" />
+  <xacro:property name="pan_tilt_len" value="0.06" />
+  <xacro:property name="wheeldiam" value="0.14" />
+  <xacro:property name="wheelsep" value="0.25" />
+  <xacro:property name="sonar_dim" value="0.02" />
+
+  <xacro:macro name="default_inertial" params="mass">
+    <inertial>
+      <mass value="${mass}" />
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="default_wheel" params="fb lr">
+    <link name="wheel_${fb}_${lr}">
+      <visual>
+        <geometry>
+          <cylinder length="0.04" radius="${wheeldiam/2}"/>
+        </geometry>
+        <origin rpy="1.57075 0 0"/>
+      </visual>
+      <xacro:default_inertial mass="2"/>
+      <collision>
+        <geometry>
+          <cylinder length="0.04" radius=".07"/>
+        </geometry>
+        <origin rpy="1.57075 0 0"/>
+      </collision>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="skid_steering" >
+    <!--
+    <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>0.0</updateRate>
+      <leftJoint>base_to_back_left_wheel</leftJoint>
+      <rightJoint>base_to_back_right_wheel</rightJoint>
+      <wheelSeparation>${wheelsep}</wheelSeparation>
+      <wheelDiameter>${wheeldiam}</wheelDiameter>
+      <torque>100</torque>
+      <commandTopic>cmd_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_link</robotBaseFrame>
+      <legacyMode>false</legacyMode>
+    </plugin>
+  </gazebo>
+-->
+    <gazebo>
+      <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
+        <updateRate>0.0</updateRate>
+        <robotNamespace>/</robotNamespace>
+        <leftFrontJoint>base_to_front_left_wheel</leftFrontJoint>
+        <rightFrontJoint>base_to_front_right_wheel</rightFrontJoint>
+        <leftRearJoint>base_to_back_left_wheel</leftRearJoint>
+        <rightRearJoint>base_to_back_right_wheel</rightRearJoint>
+        <wheelSeparation>${wheelsep}</wheelSeparation>
+        <wheelDiameter>${wheeldiam}</wheelDiameter>
+        <robotBaseFrame>base_link</robotBaseFrame>
+        <torque>10</torque>
+        <topicName>cmd_vel</topicName>
+        <broadcastTF>false</broadcastTF>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="imu" >
+    <gazebo>
+      <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+        <alwaysOn>true</alwaysOn>
+        <bodyName>imu_link</bodyName>
+        <topicName>imu</topicName>
+        <serviceName>imu_service</serviceName>
+        <gaussianNoise>0.0</gaussianNoise>
+        <updateRate>0.0</updateRate>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="trans" params="joint">
+    <transmission name="${joint}_simple_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${joint}">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="motor1">
+        <mechanicalReduction>50</mechanicalReduction>
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+  <xacro:macro name="sonar" params="location parent xval zval min_angle max_angle">
+    <link name="${location}_ultrasonic_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${sonar_dim} ${sonar_dim} ${sonar_dim}" />
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${sonar_dim} ${sonar_dim} ${sonar_dim}" />
+        </geometry>
+      </visual>
+      <xacro:default_inertial mass=".001"/>
+    </link>
+
+    <joint name="${location}_ultrasonic_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${location}_ultrasonic_link" />
+      <origin xyz="${xval} 0 ${zval}"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+    <gazebo reference="${location}_ultrasonic_link">
+      <sensor type="ray" name="${location}_ultrasonic">
+        <always_on>true</always_on>
+        <update_rate>0.0</update_rate>
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>true</visualize>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>720</samples>
+              <resolution>1</resolution>
+              <min_angle>${min_angle}</min_angle>
+              <max_angle>${max_angle}</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>4</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+
+        <plugin name="gazebo_${location}_ultrasonic_controller" filename="libhector_gazebo_ros_sonar.so">
+          <gaussianNoise>0.005</gaussianNoise>
+          <topicName>${location}_ultrasonic</topicName>
+          <frameId>${location}_ultrasonic_link</frameId>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>
