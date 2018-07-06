@@ -60,7 +60,7 @@
   <!-- Camera Joint -->
   <joint name="camera_joint" type="fixed">
     <axis xyz="0 1 0" />
-    <origin xyz="${pan_tilt_diam} 0 0.02" rpy="0 0 0"/>
+    <origin xyz="${pan_tilt_diam/2} 0 0.02" rpy="0 0 0"/>
     <parent link="pan_tilt_link"/>
     <child link="camera_link"/>
   </joint>

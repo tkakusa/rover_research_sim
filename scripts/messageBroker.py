@@ -73,7 +73,7 @@ class MessageBroker:
                 for instruction in self.running_instructions:
                     if instruction["inst_count"] == inst["inst_count"]:
                         self.running_instructions.remove(instruction)
-                        print "Removed instruction ", inst["inst_count"]
+                        # print "Removed instruction ", inst["inst_count"]
                         break
 
         # Check to make sure it is possible to move to the next instruction
@@ -213,6 +213,7 @@ class MessageBroker:
                 p1 = self.front_distance
         elif param_1 == "left_dist":
             p1 = self.left_distance
+            print "Left distance is ", self.left_distance
         elif param_1 == "right_dist":
             p1 = self.right_distance
         elif param_1 == "orange_ball":

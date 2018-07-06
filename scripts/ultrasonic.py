@@ -10,6 +10,7 @@ from rover_research.srv import *
 front_ultrasonic_data = 0
 back_ultrasonic_data = 0
 pan_ultrasonic_data = 0
+pan_counter = 0
 
 
 def callback(data):
@@ -42,7 +43,16 @@ def back_ultrasonic_callback(data):
 
 def pan_ultrasonic_callback(data):
     global pan_ultrasonic_data
-    pan_ultrasonic_data = data.range / 0.0254
+    global pan_counter
+    pan_data = data.range / 0.0254
+    pan_diff = abs(pan_data - pan_ultrasonic_data)
+    if pan_diff < 50:
+        pan_ultrasonic_data = pan_data
+    else:
+        pan_counter = pan_counter + 1
+        if pan_counter == 10:
+            pan_counter = 0
+            pan_ultrasonic_data = pan_data
 
 
 def get_distance2():
